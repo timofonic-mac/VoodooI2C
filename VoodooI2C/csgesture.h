@@ -39,6 +39,7 @@ public:
     bool ProcessMove(csgesture_softc *sc, int abovethreshold, int iToUse[3]);
     bool ProcessScroll(csgesture_softc *sc, int abovethreshold, int iToUse[3]);
     bool ProcessThreeFingerSwipe(csgesture_softc *sc, int abovethreshold, int iToUse[3]);
+    bool ProcessFourFingerSwipe(csgesture_softc *sc, int abovethreshold, int iToUse[4]);
     
     void TapToClickOrDrag(csgesture_softc *sc, int button);
     void ClearTapDrag(csgesture_softc *sc, int i);

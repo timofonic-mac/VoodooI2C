@@ -144,6 +144,14 @@ bool CSGesture::ProcessMove(csgesture_softc *sc, int abovethreshold, int iToUse[
 bool CSGesture::ProcessScroll(csgesture_softc *sc, int abovethreshold, int iToUse[3]) {
     int frequmult = 10 / sc->frequency;
     
+    if(sc->buttondown || sc->mouseDownDueToTap) {
+        if(_scrollHandler->isScrolling()) {
+            _scrollHandler->stopScroll();
+        }
+        
+        return false;
+    }
+    
     sc->scrollx = 0;
     sc->scrolly = 0;
     
@@ -235,13 +243,13 @@ bool CSGesture::ProcessScroll(csgesture_softc *sc, int abovethreshold, int iToUs
         
         if (abs(scrollx) < 5 && abs(scrolly) < 5 && !sc->scrollingActive)
             return false;
-
+        
         if (_scrollHandler){
             _scrollHandler->softc = sc;
             _scrollHandler->ProcessScroll(filterNegative(sc->x[i1]),
-                                      filterNegative(sc->y[i1]),
-                                      filterNegative(sc->x[i2]),
-                                      filterNegative(sc->y[i2]));
+                                          filterNegative(sc->y[i1]),
+                                          filterNegative(sc->x[i2]),
+                                          filterNegative(sc->y[i2]));
         }
         //_pointingWrapper->updateScroll(sc->scrolly, sc->scrollx, 0);
         
@@ -361,7 +369,7 @@ void CSGesture::TapToClickOrDrag(csgesture_softc *sc, int button) {
     
     sc->tickssinceclick++;
     if (sc->mouseDownDueToTap && sc->idForMouseDown == -1) {
-        if (sc->tickssinceclick > (10 * freqmult)) {
+        if (sc->tickssinceclick > 0) {
             sc->mouseDownDueToTap = false;
             sc->mousedown = false;
             sc->buttonmask = 0;
@@ -404,7 +412,7 @@ void CSGesture::TapToClickOrDrag(csgesture_softc *sc, int button) {
                 buttonmask = MOUSE_BUTTON_3;
             break;
     }
-    if (buttonmask != 0 && sc->tickssinceclick > (10 * freqmult) && sc->ticksincelastrelease == 0) {
+    if (buttonmask != 0 && sc->tickssinceclick > 0 && sc->ticksincelastrelease == 0) {
         sc->idForMouseDown = -1;
         sc->mouseDownDueToTap = true;
         sc->buttonmask = buttonmask;
@@ -430,7 +438,7 @@ void CSGesture::ClearTapDrag(csgesture_softc *sc, int i) {
     }
 }
 
-void CSGesture::ProcessGesture(csgesture_softc *sc) {
+void CSGesture::ProcessGesture(csgesture_softc *sc) {    
     int frequmult = 10 / sc->frequency;
 #pragma mark reset inputs
     sc->dx = 0;
@@ -471,6 +479,8 @@ void CSGesture::ProcessGesture(csgesture_softc *sc) {
     bool handled = false;
     bool handledByScroll = false;
     
+    if (!handled)
+        handled = ProcessFourFingerSwipe(sc, abovethreshold, iToUse);
     if (!handled)
         handled = ProcessThreeFingerSwipe(sc, abovethreshold, iToUse);
     if (!handled && !sc->buttondown && !sc->mouseDownDueToTap)
